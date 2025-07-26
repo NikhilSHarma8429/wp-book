@@ -123,17 +123,22 @@
 
     
     function wp_book_meta_box_callback( $post ) {
-        
+        global $wpdb;
         wp_nonce_field( 'wp_book_save_meta_box', 'wp_book_meta_box_nonce' );
 
-        
-        $author    = get_post_meta( $post->ID, '_wp_book_author', true );
-        $price     = get_post_meta( $post->ID, '_wp_book_price', true );
-        $publisher = get_post_meta( $post->ID, '_wp_book_publisher', true );
-        $year      = get_post_meta( $post->ID, '_wp_book_year', true );
-        $edition   = get_post_meta( $post->ID, '_wp_book_edition', true );
-        $url       = get_post_meta( $post->ID, '_wp_book_url', true );
+        $table = $wpdb->prefix . 'book_meta';
 
+        $meta = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM $table WHERE post_id = %d", $post->ID),
+            ARRAY_A
+        );
+
+        $author    = $meta['author'] ?? '';
+        $price     = $meta['price'] ?? '';
+        $publisher = $meta['publisher'] ?? '';
+        $year      = $meta['year'] ?? '';
+        $edition   = $meta['edition'] ?? '';
+        $url       = $meta['url'] ?? '';
         ?>
         <p>
             <label><strong>Author Name:</strong></label><br>
@@ -329,3 +334,4 @@
         <?php
     }
 
+    require_once plugin_dir_path(__FILE__) . 'includes/class-wp-book-shortcode.php';
