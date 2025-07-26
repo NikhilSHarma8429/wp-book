@@ -335,3 +335,43 @@
     }
 
     require_once plugin_dir_path(__FILE__) . 'includes/class-wp-book-shortcode.php';
+
+    function wp_book_register_block() {
+        // Register the block editor script
+        wp_register_script(
+            'wp-book-block',
+            plugins_url( 'blocks/book-block.js', __FILE__ ),
+            array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-i18n', 'wp-components', 'wp-block-editor' ),
+            filemtime( plugin_dir_path( __FILE__ ) . 'blocks/book-block.js' ),
+            true
+        );
+
+        // Register the block type
+        register_block_type( 'wp-book/book-block', array(
+            'editor_script' => 'wp-book-block',
+            'render_callback' => 'wp_book_render_block',
+            'attributes' => array(
+                'author' => array(
+                    'type' => 'string',
+                    'default' => ''
+                )
+            )
+        ) );
+    }
+    add_action( 'init', 'wp_book_register_block' ); 
+
+    function wp_book_render_block($attributes) {
+        $atts = shortcode_atts(
+            array(
+                'author' => '',
+            ),
+            $attributes
+        );
+
+        if ( function_exists( 'wp_book_shortcode' ) ) {
+            return wp_book_shortcode( $atts );
+        }
+
+        return '<p>No books found.</p>';
+    }
+
