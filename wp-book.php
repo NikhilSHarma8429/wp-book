@@ -229,3 +229,103 @@
         dbDelta( $sql );
     }
 
+    function wp_book_add_settings_submenu() {
+        add_submenu_page(
+            'edit.php?post_type=book',              // Parent = Books menu
+            __( 'Book Settings', 'wp-book' ),       // Page title
+            __( 'Settings', 'wp-book' ),            // Menu title
+            'manage_options',                       // Capability
+            'wp-book-settings',                     // Menu slug
+            'wp_book_render_settings_page'          // Callback
+        );
+    }
+    add_action( 'admin_menu', 'wp_book_add_settings_submenu' );
+
+    function wp_book_register_settings() {
+        register_setting(
+            'wp_book_settings_group',               // Option group (used in settings_fields)
+            'wp_book_settings',                     // Option name (stored in wp_options)
+            'wp_book_sanitize_settings'             // Sanitize callback
+        );
+
+        add_settings_section(
+            'wp_book_general_section',
+            __( 'General Settings', 'wp-book' ),
+            '__return_false',
+            'wp_book_settings_page'
+        );
+
+        add_settings_field(
+            'wp_book_currency',
+            __( 'Currency Symbol', 'wp-book' ),
+            'wp_book_field_currency_cb',
+            'wp_book_settings_page',
+            'wp_book_general_section'
+        );
+
+        add_settings_field(
+            'wp_book_books_per_page',
+            __( 'Books Per Page', 'wp-book' ),
+            'wp_book_field_books_per_page_cb',
+            'wp_book_settings_page',
+            'wp_book_general_section'
+        );
+    }
+    add_action( 'admin_init', 'wp_book_register_settings' );
+
+    function wp_book_sanitize_settings( $input ) {
+        $output = array();
+
+        $output['currency']        = isset( $input['currency'] ) ? sanitize_text_field( $input['currency'] ) : '';
+        $output['books_per_page']  = isset( $input['books_per_page'] ) ? absint( $input['books_per_page'] ) : 10;
+
+        if ( $output['books_per_page'] <= 0 ) {
+            $output['books_per_page'] = 10;
+        }
+
+        return $output;
+    }
+
+    function wp_book_render_settings_page() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $options = get_option( 'wp_book_settings', array(
+            'currency'       => '₹',
+            'books_per_page' => 10,
+        ) );
+        ?>
+        <div class="wrap">
+            <h1><?php _e( 'Book Settings', 'wp-book' ); ?></h1>
+
+            <form method="post" action="options.php">
+                <?php
+                    settings_fields( 'wp_book_settings_group' );   // nonce + option group
+                    do_settings_sections( 'wp_book_settings_page' ); // our fields
+                    submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+
+
+    function wp_book_field_currency_cb() {
+        $options  = get_option( 'wp_book_settings', array() );
+        $currency = isset( $options['currency'] ) ? $options['currency'] : '₹';
+        ?>
+        <input type="text" name="wp_book_settings[currency]" value="<?php echo esc_attr( $currency ); ?>" class="regular-text" placeholder="₹, $, €, ...">
+        <p class="description"><?php _e( 'Symbol used to display book prices.', 'wp-book' ); ?></p>
+        <?php
+    }
+
+    function wp_book_field_books_per_page_cb() {
+        $options        = get_option( 'wp_book_settings', array() );
+        $books_per_page = isset( $options['books_per_page'] ) ? absint( $options['books_per_page'] ) : 10;
+        ?>
+        <input type="number" min="1" name="wp_book_settings[books_per_page]" value="<?php echo esc_attr( $books_per_page ); ?>" class="small-text">
+        <p class="description"><?php _e( 'How many books to show per page (shortcode, archives, etc.).', 'wp-book' ); ?></p>
+        <?php
+    }
+
