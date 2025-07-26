@@ -108,3 +108,85 @@
         register_taxonomy( 'book_tag', 'book', $args );
     }
     add_action( 'init', 'wp_book_register_book_tag_taxonomy' );
+
+    function wp_book_add_meta_box() {
+        add_meta_box(
+            'wp_book_meta_box',              // ID
+            __( 'Book Details', 'wp-book' ),// Title
+            'wp_book_meta_box_callback',     // Callback function
+            'book',                          // Screen (post type)
+            'normal',                        // Context
+            'default'                        // Priority
+        );
+    }
+    add_action( 'add_meta_boxes', 'wp_book_add_meta_box' );
+
+    
+    function wp_book_meta_box_callback( $post ) {
+        
+        wp_nonce_field( 'wp_book_save_meta_box', 'wp_book_meta_box_nonce' );
+
+        
+        $author    = get_post_meta( $post->ID, '_wp_book_author', true );
+        $price     = get_post_meta( $post->ID, '_wp_book_price', true );
+        $publisher = get_post_meta( $post->ID, '_wp_book_publisher', true );
+        $year      = get_post_meta( $post->ID, '_wp_book_year', true );
+        $edition   = get_post_meta( $post->ID, '_wp_book_edition', true );
+        $url       = get_post_meta( $post->ID, '_wp_book_url', true );
+
+        ?>
+        <p>
+            <label><strong>Author Name:</strong></label><br>
+            <input type="text" name="wp_book_author" value="<?php echo esc_attr( $author ); ?>" class="widefat">
+        </p>
+        <p>
+            <label><strong>Price:</strong></label><br>
+            <input type="number" step="0.01" name="wp_book_price" value="<?php echo esc_attr( $price ); ?>" class="widefat">
+        </p>
+        <p>
+            <label><strong>Publisher:</strong></label><br>
+            <input type="text" name="wp_book_publisher" value="<?php echo esc_attr( $publisher ); ?>" class="widefat">
+        </p>
+        <p>
+            <label><strong>Year:</strong></label><br>
+            <input type="number" name="wp_book_year" value="<?php echo esc_attr( $year ); ?>" class="widefat">
+        </p>
+        <p>
+            <label><strong>Edition:</strong></label><br>
+            <input type="text" name="wp_book_edition" value="<?php echo esc_attr( $edition ); ?>" class="widefat">
+        </p>
+        <p>
+            <label><strong>URL:</strong></label><br>
+            <input type="url" name="wp_book_url" value="<?php echo esc_attr( $url ); ?>" class="widefat">
+        </p>
+        <?php
+    }
+
+    function wp_book_save_meta_box_data( $post_id ) {
+        
+        if ( ! isset( $_POST['wp_book_meta_box_nonce'] ) || 
+            ! wp_verify_nonce( $_POST['wp_book_meta_box_nonce'], 'wp_book_save_meta_box' ) ) {
+            return;
+        }
+
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+        
+        $fields = [
+            'author'    => '_wp_book_author',
+            'price'     => '_wp_book_price',
+            'publisher' => '_wp_book_publisher',
+            'year'      => '_wp_book_year',
+            'edition'   => '_wp_book_edition',
+            'url'       => '_wp_book_url',
+        ];
+
+        foreach ( $fields as $field => $meta_key ) {
+            if ( isset( $_POST[ "wp_book_$field" ] ) ) {
+                update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ "wp_book_$field" ] ) );
+            }
+        }
+    }
+    add_action( 'save_post', 'wp_book_save_meta_box_data' );
+
