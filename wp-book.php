@@ -375,3 +375,34 @@
         return '<p>No books found.</p>';
     }
 
+    add_action('wp_dashboard_setup', 'wp_book_register_dashboard_widget');
+
+    function wp_book_register_dashboard_widget() {
+        wp_add_dashboard_widget(
+            'wp_book_top_categories',
+            'Top 5 Book Categories',
+            'wp_book_display_top_categories_widget'
+        );
+    }
+
+    function wp_book_display_top_categories_widget() {
+        $terms = get_terms(array(
+            'taxonomy'   => 'book_category',
+            'orderby'    => 'count',
+            'order'      => 'DESC',
+            'number'     => 5,
+            'hide_empty' => false,
+        ));
+
+        if (empty($terms) || is_wp_error($terms)) {
+            echo '<p>No categories found.</p>';
+            return;
+        }
+
+        echo '<ul>';
+        foreach ($terms as $term) {
+            echo '<li>' . esc_html($term->name) . ' (' . intval($term->count) . ' books)</li>';
+        }
+        echo '</ul>';
+    }
+
