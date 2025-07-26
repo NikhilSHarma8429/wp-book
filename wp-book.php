@@ -47,3 +47,32 @@
         register_post_type( 'book', $args );
     }
     add_action( 'init', 'wp_book_register_post_type' );
+
+    function wp_book_register_book_category_taxonomy() {
+    $labels = array(
+            'name'              => __( 'Book Categories', 'wp-book' ),
+            'singular_name'     => __( 'Book Category', 'wp-book' ),
+            'search_items'      => __( 'Search Book Categories', 'wp-book' ),
+            'all_items'         => __( 'All Book Categories', 'wp-book' ),
+            'parent_item'       => __( 'Parent Category', 'wp-book' ),
+            'parent_item_colon' => __( 'Parent Category:', 'wp-book' ),
+            'edit_item'         => __( 'Edit Book Category', 'wp-book' ),
+            'update_item'       => __( 'Update Book Category', 'wp-book' ),
+            'add_new_item'      => __( 'Add New Book Category', 'wp-book' ),
+            'new_item_name'     => __( 'New Book Category Name', 'wp-book' ),
+            'menu_name'         => __( 'Book Categories', 'wp-book' ),
+        );
+
+        $args = array(
+            'hierarchical'      => true, // Like categories
+            'labels'            => $labels,
+            'show_ui'           => true,
+            'show_admin_column' => true, // Show in Book list table
+            'query_var'         => true,
+            'rewrite'           => array( 'slug' => 'book-category' ),
+            'show_in_rest'      => true  // Gutenberg support
+        );
+
+        register_taxonomy( 'book_category', array( 'book' ), $args );
+    }
+    add_action( 'init', 'wp_book_register_book_category_taxonomy' );
